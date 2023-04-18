@@ -1,9 +1,11 @@
-﻿using BookRental.NET.Data;
+﻿using AutoMapper;
+using BookRental.NET.Data;
 using BookRental.NET.Models;
 using BookRental.NET.Models.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookRental.NET.Controllers
 {
@@ -12,85 +14,78 @@ namespace BookRental.NET.Controllers
     public class LoginController : ControllerBase
     {
         private readonly BookRentalDbContext _bookRentalDbContext;
+        private readonly IMapper _mapper;
 
-        public LoginController(BookRentalDbContext bookRentalDbContext)
+        public LoginController(BookRentalDbContext bookRentalDbContext, IMapper mapper)
         {
             _bookRentalDbContext = bookRentalDbContext;
+            _mapper = mapper;
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<UserDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<UserDTO>), StatusCodes.Status404NotFound)]
-        public ActionResult<IEnumerable<UserDTO>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            return Ok(_bookRentalDbContext.Users.ToList());
+            IEnumerable<User> userList = await _bookRentalDbContext.Users.ToListAsync();
+            return Ok(_mapper.Map<List<UserDTO>>(userList));
         }
 
         [HttpGet("{id:int}", Name = "GetUser")]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status404NotFound)]
-        public ActionResult<UserDTO> GetUser(int id)
+        public async Task<ActionResult<UserDTO>> GetUser(int id)
         {
             if (id == 0)
             {
                 return BadRequest();
             }
 
-            var user = _bookRentalDbContext.Users.FirstOrDefault(u => u.Id == id);
+            var user = await _bookRentalDbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null) return NotFound();
 
-            return Ok(user);
+            return Ok(_mapper.Map<UserDTO>(user));
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status500InternalServerError)]
-        public ActionResult<UserDTO> CreateUser([FromBody] UserDTO userDTO)
+        public async Task<ActionResult<UserDTO>> CreateUser([FromBody] UserDTOCreate createDTO)
         {
             // Email address is not unique
-            if (_bookRentalDbContext.Users.FirstOrDefault(u => u.Email.ToLower() == userDTO.Email.ToLower()) != null)
+            if (await _bookRentalDbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == createDTO.Email.ToLower()) != null)
             {
                 ModelState.AddModelError("Duplicate Error", "Email address is already in use");
                 return BadRequest(ModelState);
             }
 
-            if (userDTO == null) return BadRequest();
+            if (createDTO == null) return BadRequest();
 
-            if (userDTO.Id > 0) return StatusCode(StatusCodes.Status500InternalServerError);
+            User user = _mapper.Map<User>(createDTO);
 
-            User user = new User()
-            {
-                Name = userDTO.Name,
-                Email = userDTO.Email,
-                Location = userDTO.Location,
-                Password = userDTO.Password,
-                PhoneNumber = userDTO.PhoneNumber,
-                StartingDate = userDTO.StartingDate,
-                IsAdmin = userDTO.IsAdmin
-            };
+            await _bookRentalDbContext.Users.AddAsync(user);
+            await _bookRentalDbContext.SaveChangesAsync();
 
-            _bookRentalDbContext.Users.Add(user);
-            _bookRentalDbContext.SaveChanges();
-
-            return CreatedAtRoute("GetUser", new { id = userDTO.Id }, userDTO);
+            return CreatedAtRoute("GetUser", new { id = user.Id }, user);
         }
 
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status400BadRequest)]
         [HttpDelete("{id:int}", Name = "DeleteUser")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
             if (id == 0) return BadRequest();
 
-            var user = _bookRentalDbContext.Users.FirstOrDefault(user => user.Id == id);
+            var user = await _bookRentalDbContext.Users.FirstOrDefaultAsync(user => user.Id == id);
 
             if (user == null) return NotFound();
 
             _bookRentalDbContext.Users.Remove(user);
+            await _bookRentalDbContext.SaveChangesAsync();
 
             return NoContent();
         }
@@ -99,23 +94,14 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status400BadRequest)]
         [HttpPut("{id:int}", Name = "EditUser")]
-        public IActionResult UpdateUser(int id, [FromBody] UserDTO userDTO)
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDTOUpdate updateDTO)
         {
-            if (userDTO == null || id != userDTO.Id) return BadRequest();
+            if (updateDTO == null || id != updateDTO.Id) return BadRequest();
 
-            User user = new User()
-            {
-                Name = userDTO.Name,
-                Email = userDTO.Email,
-                Location = userDTO.Location,
-                Password = userDTO.Password,
-                PhoneNumber = userDTO.PhoneNumber,
-                StartingDate = userDTO.StartingDate,
-                IsAdmin = userDTO.IsAdmin
-            };
+            User user = _mapper.Map<User>(updateDTO);
 
             _bookRentalDbContext.Users.Update(user);
-            _bookRentalDbContext.SaveChanges();
+            await _bookRentalDbContext.SaveChangesAsync();
 
             return NoContent();
         }
@@ -124,40 +110,22 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status400BadRequest)]
         [HttpPatch("{id:int}", Name = "EditUserPartial")]
-        public IActionResult UpdateUserPartial(int id, JsonPatchDocument<UserDTO> patchDTO)
+        public async Task<IActionResult> UpdateUserPartial(int id, JsonPatchDocument<UserDTOUpdate> patchDTO)
         {
             if (patchDTO == null || id == 0) return BadRequest();
 
-            var user = _bookRentalDbContext.Users.FirstOrDefault(userDTO => userDTO.Id == id);
+            var user = await _bookRentalDbContext.Users.AsNoTracking().FirstOrDefaultAsync(userDTO => userDTO.Id == id);
 
-            UserDTO userDTO = new UserDTO()
-            {
-                Name = user.Name,
-                Email = user.Email,
-                Location = user.Location,
-                Password = user.Password,
-                PhoneNumber = user.PhoneNumber,
-                StartingDate = user.StartingDate,
-                IsAdmin = user.IsAdmin
-            };
+            UserDTOUpdate updateDTO = _mapper.Map<UserDTOUpdate>(user);
 
             if (user == null) return NotFound();
 
-            patchDTO.ApplyTo(userDTO, ModelState);
+            patchDTO.ApplyTo(updateDTO, ModelState);
 
-            User patchedUser = new User()
-            {
-                Name = userDTO.Name,
-                Email = userDTO.Email,
-                Location = userDTO.Location,
-                Password = userDTO.Password,
-                PhoneNumber = userDTO.PhoneNumber,
-                StartingDate = userDTO.StartingDate,
-                IsAdmin = userDTO.IsAdmin
-            };
+            User model = _mapper.Map<User>(updateDTO);
 
-            _bookRentalDbContext.Users.Update(patchedUser);
-            _bookRentalDbContext.SaveChanges();
+            _bookRentalDbContext.Users.Update(model);
+            await _bookRentalDbContext.SaveChangesAsync();
 
             if (!ModelState.IsValid) return BadRequest(ModelState);
 

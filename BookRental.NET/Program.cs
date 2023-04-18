@@ -1,4 +1,5 @@
 
+using BookRental.NET;
 using BookRental.NET.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ builder.Services.AddDbContext<BookRentalDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
 });
+builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddControllers(option =>
 {
     // option.ReturnHttpNotAcceptable = true; // TODO: Uncomment later, uncommenting is useful for Swagger debugging only

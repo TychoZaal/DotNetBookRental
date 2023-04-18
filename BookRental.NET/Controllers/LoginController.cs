@@ -1,4 +1,5 @@
-﻿using BookRental.NET.Models;
+﻿using BookRental.NET.Data;
+using BookRental.NET.Models;
 using BookRental.NET.Models.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
@@ -10,16 +11,19 @@ namespace BookRental.NET.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
+        private readonly BookRentalDbContext _bookRentalDbContext;
+
+        public LoginController(BookRentalDbContext bookRentalDbContext)
+        {
+            _bookRentalDbContext = bookRentalDbContext;
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<UserDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<UserDTO>), StatusCodes.Status404NotFound)]
         public ActionResult<IEnumerable<UserDTO>> GetUsers()
         {
-            List<UserDTO> user = UserDatabase.userList;
-
-            if (user == null) return NotFound();
-
-            return Ok(user);
+            return Ok(_bookRentalDbContext.Users.ToList());
         }
 
         [HttpGet("{id:int}", Name = "GetUser")]
@@ -28,9 +32,12 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(UserDTO), StatusCodes.Status404NotFound)]
         public ActionResult<UserDTO> GetUser(int id)
         {
-            if (id == 0) return BadRequest();
+            if (id == 0)
+            {
+                return BadRequest();
+            }
 
-            UserDTO user = UserDatabase.userList.FirstOrDefault(u => u.Id == id);
+            var user = _bookRentalDbContext.Users.FirstOrDefault(u => u.Id == id);
 
             if (user == null) return NotFound();
 
@@ -44,7 +51,7 @@ namespace BookRental.NET.Controllers
         public ActionResult<UserDTO> CreateUser([FromBody] UserDTO userDTO)
         {
             // Email address is not unique
-            if (UserDatabase.userList.FirstOrDefault(u => u.Email.ToLower() == userDTO.Email.ToLower()) != null)
+            if (_bookRentalDbContext.Users.FirstOrDefault(u => u.Email.ToLower() == userDTO.Email.ToLower()) != null)
             {
                 ModelState.AddModelError("Duplicate Error", "Email address is already in use");
                 return BadRequest(ModelState);
@@ -54,9 +61,19 @@ namespace BookRental.NET.Controllers
 
             if (userDTO.Id > 0) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            userDTO.Id = UserDatabase.userList.OrderByDescending(u => u.Id).FirstOrDefault().Id + 1;
+            User user = new User()
+            {
+                Name = userDTO.Name,
+                Email = userDTO.Email,
+                Location = userDTO.Location,
+                Password = userDTO.Password,
+                PhoneNumber = userDTO.PhoneNumber,
+                StartingDate = userDTO.StartingDate,
+                IsAdmin = userDTO.IsAdmin
+            };
 
-            UserDatabase.userList.Add(userDTO);
+            _bookRentalDbContext.Users.Add(user);
+            _bookRentalDbContext.SaveChanges();
 
             return CreatedAtRoute("GetUser", new { id = userDTO.Id }, userDTO);
         }
@@ -69,11 +86,11 @@ namespace BookRental.NET.Controllers
         {
             if (id == 0) return BadRequest();
 
-            UserDTO user = UserDatabase.userList.FirstOrDefault(user => user.Id == id);
+            var user = _bookRentalDbContext.Users.FirstOrDefault(user => user.Id == id);
 
             if (user == null) return NotFound();
 
-            UserDatabase.userList.Remove(user);
+            _bookRentalDbContext.Users.Remove(user);
 
             return NoContent();
         }
@@ -86,14 +103,19 @@ namespace BookRental.NET.Controllers
         {
             if (userDTO == null || id != userDTO.Id) return BadRequest();
 
-            UserDTO user = UserDatabase.userList.FirstOrDefault(userDTO => userDTO.Id == id);
+            User user = new User()
+            {
+                Name = userDTO.Name,
+                Email = userDTO.Email,
+                Location = userDTO.Location,
+                Password = userDTO.Password,
+                PhoneNumber = userDTO.PhoneNumber,
+                StartingDate = userDTO.StartingDate,
+                IsAdmin = userDTO.IsAdmin
+            };
 
-            if (user == null) return NotFound();
-
-            user.Name = userDTO.Name;
-            user.Email = userDTO.Email;
-            user.Location = userDTO.Location;
-            user.PhoneNumber = userDTO.PhoneNumber;
+            _bookRentalDbContext.Users.Update(user);
+            _bookRentalDbContext.SaveChanges();
 
             return NoContent();
         }
@@ -106,11 +128,36 @@ namespace BookRental.NET.Controllers
         {
             if (patchDTO == null || id == 0) return BadRequest();
 
-            UserDTO user = UserDatabase.userList.FirstOrDefault(userDTO => userDTO.Id == id);
+            var user = _bookRentalDbContext.Users.FirstOrDefault(userDTO => userDTO.Id == id);
+
+            UserDTO userDTO = new UserDTO()
+            {
+                Name = user.Name,
+                Email = user.Email,
+                Location = user.Location,
+                Password = user.Password,
+                PhoneNumber = user.PhoneNumber,
+                StartingDate = user.StartingDate,
+                IsAdmin = user.IsAdmin
+            };
 
             if (user == null) return NotFound();
 
-            patchDTO.ApplyTo(user, ModelState);
+            patchDTO.ApplyTo(userDTO, ModelState);
+
+            User patchedUser = new User()
+            {
+                Name = userDTO.Name,
+                Email = userDTO.Email,
+                Location = userDTO.Location,
+                Password = userDTO.Password,
+                PhoneNumber = userDTO.PhoneNumber,
+                StartingDate = userDTO.StartingDate,
+                IsAdmin = userDTO.IsAdmin
+            };
+
+            _bookRentalDbContext.Users.Update(patchedUser);
+            _bookRentalDbContext.SaveChanges();
 
             if (!ModelState.IsValid) return BadRequest(ModelState);
 

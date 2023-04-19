@@ -8,6 +8,7 @@ namespace BookRental.NET
     {
         public MappingConfig()
         {
+            // Users
             CreateMap<User, UserDTO>();
             CreateMap<UserDTO, User>();
 
@@ -15,6 +16,13 @@ namespace BookRental.NET
             CreateMap<User, UserDTOCreate>().ReverseMap();
             CreateMap<UserDTO, UserDTOUpdate>().ReverseMap();
             CreateMap<User, UserDTOUpdate>().ReverseMap();
+
+            // Books
+            CreateMap<Book, BookDTO>().ReverseMap();
+            CreateMap<BookDTO, BookDTOCreate>().ReverseMap();
+            CreateMap<Book, BookDTOCreate>().ReverseMap();
+            CreateMap<BookDTO, BookDTOUpdate>().ReverseMap();
+            CreateMap<Book, BookDTOUpdate>().ReverseMap();
         }
     }
 }

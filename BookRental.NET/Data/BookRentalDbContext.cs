@@ -11,6 +11,7 @@ namespace BookRental.NET.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Book> Books { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +51,30 @@ namespace BookRental.NET.Data
                     StartingDate = DateTime.Now,
                     IsAdmin = false,
                     Token = ""
+                }
+                );
+
+            modelBuilder.Entity<Book>().HasData(
+                new Book
+                {
+                    Id = 1,
+                    Title = "Knight of the Seven Kingdoms",
+                    Author = "George R. R. Martin",
+                    ISBN = "1234-5678-4200"
+                },
+                new Book
+                {
+                    Id = 2,
+                    Title = "Shadow and Bone",
+                    Author = "Leigh Bardugo",
+                    ISBN = "8972-2387-2873"
+                },
+                new Book
+                {
+                    Id = 3,
+                    Title = "Lord of the Rings",
+                    Author = "J. R. R. Tolkien",
+                    ISBN = "2890-5498-1283"
                 }
                 );
         }

@@ -12,6 +12,7 @@ builder.Services.AddDbContext<BookRentalDbContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
 });
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddControllers(option =>
 {

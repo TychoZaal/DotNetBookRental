@@ -12,7 +12,9 @@ namespace BookRental.NET
             CreateMap<UserDTO, User>();
 
             CreateMap<UserDTO, UserDTOCreate>().ReverseMap();
+            CreateMap<User, UserDTOCreate>().ReverseMap();
             CreateMap<UserDTO, UserDTOUpdate>().ReverseMap();
+            CreateMap<User, UserDTOUpdate>().ReverseMap();
         }
     }
 }

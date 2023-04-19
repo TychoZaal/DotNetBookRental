@@ -20,5 +20,6 @@ namespace BookRental.NET.Models.Dto
         public DateTime StartingDate { get; set; }
         [Required]
         public bool IsAdmin { get; set; }
+        public string Token { get; set; }
     }
 }

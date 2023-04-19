@@ -2,6 +2,7 @@
 using BookRental.NET.Data;
 using BookRental.NET.Models;
 using BookRental.NET.Models.Dto;
+using BookRental.NET.Repository.IRepository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -13,12 +14,12 @@ namespace BookRental.NET.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        private readonly BookRentalDbContext _bookRentalDbContext;
+        private readonly IUserRepository _dbUser;
         private readonly IMapper _mapper;
 
-        public LoginController(BookRentalDbContext bookRentalDbContext, IMapper mapper)
+        public LoginController(IUserRepository dbUser, IMapper mapper)
         {
-            _bookRentalDbContext = bookRentalDbContext;
+            _dbUser = dbUser;
             _mapper = mapper;
         }
 
@@ -27,7 +28,7 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(IEnumerable<UserDTO>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            IEnumerable<User> userList = await _bookRentalDbContext.Users.ToListAsync();
+            IEnumerable<User> userList = await _dbUser.GetAllAsync();
             return Ok(_mapper.Map<List<UserDTO>>(userList));
         }
 
@@ -42,7 +43,7 @@ namespace BookRental.NET.Controllers
                 return BadRequest();
             }
 
-            var user = await _bookRentalDbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _dbUser.GetAsync(u => u.Id == id);
 
             if (user == null) return NotFound();
 
@@ -56,7 +57,7 @@ namespace BookRental.NET.Controllers
         public async Task<ActionResult<UserDTO>> CreateUser([FromBody] UserDTOCreate createDTO)
         {
             // Email address is not unique
-            if (await _bookRentalDbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == createDTO.Email.ToLower()) != null)
+            if (await _dbUser.GetAsync(u => u.Email.ToLower() == createDTO.Email.ToLower()) != null)
             {
                 ModelState.AddModelError("Duplicate Error", "Email address is already in use");
                 return BadRequest(ModelState);
@@ -66,8 +67,8 @@ namespace BookRental.NET.Controllers
 
             User user = _mapper.Map<User>(createDTO);
 
-            await _bookRentalDbContext.Users.AddAsync(user);
-            await _bookRentalDbContext.SaveChangesAsync();
+            await _dbUser.CreateAsync(user);
+            await _dbUser.SaveAsync();
 
             return CreatedAtRoute("GetUser", new { id = user.Id }, user);
         }
@@ -80,12 +81,12 @@ namespace BookRental.NET.Controllers
         {
             if (id == 0) return BadRequest();
 
-            var user = await _bookRentalDbContext.Users.FirstOrDefaultAsync(user => user.Id == id);
+            var user = await _dbUser.GetAsync(user => user.Id == id);
 
             if (user == null) return NotFound();
 
-            _bookRentalDbContext.Users.Remove(user);
-            await _bookRentalDbContext.SaveChangesAsync();
+            await _dbUser.RemoveAsync(user);
+            await _dbUser.SaveAsync();
 
             return NoContent();
         }
@@ -100,8 +101,8 @@ namespace BookRental.NET.Controllers
 
             User user = _mapper.Map<User>(updateDTO);
 
-            _bookRentalDbContext.Users.Update(user);
-            await _bookRentalDbContext.SaveChangesAsync();
+            await _dbUser.UpdateAsync(user);
+            await _dbUser.SaveAsync();
 
             return NoContent();
         }
@@ -114,7 +115,7 @@ namespace BookRental.NET.Controllers
         {
             if (patchDTO == null || id == 0) return BadRequest();
 
-            var user = await _bookRentalDbContext.Users.AsNoTracking().FirstOrDefaultAsync(userDTO => userDTO.Id == id);
+            var user = await _dbUser.GetAsync(userDTO => userDTO.Id == id, track: false);
 
             UserDTOUpdate updateDTO = _mapper.Map<UserDTOUpdate>(user);
 
@@ -124,8 +125,8 @@ namespace BookRental.NET.Controllers
 
             User model = _mapper.Map<User>(updateDTO);
 
-            _bookRentalDbContext.Users.Update(model);
-            await _bookRentalDbContext.SaveChangesAsync();
+            await _dbUser.UpdateAsync(model);
+            await _dbUser.SaveAsync();
 
             if (!ModelState.IsValid) return BadRequest(ModelState);
 

@@ -2,7 +2,6 @@
 using BookRental.NET;
 using BookRental.NET.Data;
 using BookRental.NET.Repository;
-using BookRental.NET.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

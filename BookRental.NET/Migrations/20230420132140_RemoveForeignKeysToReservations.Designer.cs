@@ -4,6 +4,7 @@ using BookRental.NET.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookRental.NET.Migrations
 {
     [DbContext(typeof(BookRentalDbContext))]
-    partial class BookRentalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230420132140_RemoveForeignKeysToReservations")]
+    partial class RemoveForeignKeysToReservations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,62 +73,6 @@ namespace BookRental.NET.Migrations
                         });
                 });
 
-            modelBuilder.Entity("BookRental.NET.Models.Loan", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Loans");
-                });
-
-            modelBuilder.Entity("BookRental.NET.Models.Reservation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Reservations");
-                });
-
             modelBuilder.Entity("BookRental.NET.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -178,7 +125,7 @@ namespace BookRental.NET.Migrations
                             Name = "Admin WT",
                             Password = "admin",
                             PhoneNumber = "1234",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8688),
+                            StartingDate = new DateTime(2023, 4, 20, 15, 21, 40, 856, DateTimeKind.Local).AddTicks(2083),
                             Token = ""
                         },
                         new
@@ -190,7 +137,7 @@ namespace BookRental.NET.Migrations
                             Name = "Intern WT",
                             Password = "intern",
                             PhoneNumber = "5678",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8722),
+                            StartingDate = new DateTime(2023, 4, 20, 15, 21, 40, 856, DateTimeKind.Local).AddTicks(2126),
                             Token = ""
                         },
                         new
@@ -202,54 +149,9 @@ namespace BookRental.NET.Migrations
                             Name = "Client User",
                             Password = "client",
                             PhoneNumber = "password",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8724),
+                            StartingDate = new DateTime(2023, 4, 20, 15, 21, 40, 856, DateTimeKind.Local).AddTicks(2129),
                             Token = ""
                         });
-                });
-
-            modelBuilder.Entity("BookRental.NET.Models.Loan", b =>
-                {
-                    b.HasOne("BookRental.NET.Models.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BookRental.NET.Models.User", "User")
-                        .WithMany("Loans")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BookRental.NET.Models.Reservation", b =>
-                {
-                    b.HasOne("BookRental.NET.Models.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BookRental.NET.Models.User", "User")
-                        .WithMany("Reservations")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BookRental.NET.Models.User", b =>
-                {
-                    b.Navigation("Loans");
-
-                    b.Navigation("Reservations");
                 });
 #pragma warning restore 612, 618
         }

@@ -4,6 +4,7 @@ using BookRental.NET.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookRental.NET.Migrations
 {
     [DbContext(typeof(BookRentalDbContext))]
-    partial class BookRentalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230424111113_ReservationsAndLoansAdded")]
+    partial class ReservationsAndLoansAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,9 +110,6 @@ namespace BookRental.NET.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -118,8 +118,6 @@ namespace BookRental.NET.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BookId");
 
                     b.HasIndex("UserId");
 
@@ -178,7 +176,7 @@ namespace BookRental.NET.Migrations
                             Name = "Admin WT",
                             Password = "admin",
                             PhoneNumber = "1234",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8688),
+                            StartingDate = new DateTime(2023, 4, 24, 13, 11, 13, 763, DateTimeKind.Local).AddTicks(4502),
                             Token = ""
                         },
                         new
@@ -190,7 +188,7 @@ namespace BookRental.NET.Migrations
                             Name = "Intern WT",
                             Password = "intern",
                             PhoneNumber = "5678",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8722),
+                            StartingDate = new DateTime(2023, 4, 24, 13, 11, 13, 763, DateTimeKind.Local).AddTicks(4535),
                             Token = ""
                         },
                         new
@@ -202,7 +200,7 @@ namespace BookRental.NET.Migrations
                             Name = "Client User",
                             Password = "client",
                             PhoneNumber = "password",
-                            StartingDate = new DateTime(2023, 4, 24, 13, 13, 41, 485, DateTimeKind.Local).AddTicks(8724),
+                            StartingDate = new DateTime(2023, 4, 24, 13, 11, 13, 763, DateTimeKind.Local).AddTicks(4537),
                             Token = ""
                         });
                 });
@@ -228,19 +226,11 @@ namespace BookRental.NET.Migrations
 
             modelBuilder.Entity("BookRental.NET.Models.Reservation", b =>
                 {
-                    b.HasOne("BookRental.NET.Models.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BookRental.NET.Models.User", "User")
                         .WithMany("Reservations")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Book");
 
                     b.Navigation("User");
                 });

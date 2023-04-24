@@ -2,15 +2,15 @@
 
 namespace BookRental.NET.Models.Dto
 {
-    public class BookDTOUpdate
+    public class ReservationDTOUpdate
     {
         [Required]
         public int Id { get; set; }
         [Required]
-        public string Title { get; set; }
+        public string Status { get; set; }
         [Required]
-        public string Author { get; set; }
+        public User User { get; set; }
         [Required]
-        public string ISBN { get; set; }
+        public Book Book { get; set; }
     }
 }

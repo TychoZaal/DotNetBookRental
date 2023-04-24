@@ -16,6 +16,8 @@ namespace BookRental.NET.Models
         public DateTime StartingDate { get; set; }
         public bool IsAdmin { get; set; }
         public string Token { get; set; }
+        public ICollection<Reservation> Reservations { get; set; }
+        public ICollection<Loan> Loans { get; set; }
 
     }
 }

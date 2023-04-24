@@ -2,15 +2,16 @@
 
 namespace BookRental.NET.Models.Dto
 {
-    public class BookDTOUpdate
+    public class LoanDTO
     {
         [Required]
         public int Id { get; set; }
         [Required]
-        public string Title { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         [Required]
-        public string Author { get; set; }
+        public User User { get; set; }
         [Required]
-        public string ISBN { get; set; }
+        public Book Book { get; set; }
     }
 }

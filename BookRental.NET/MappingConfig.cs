@@ -23,6 +23,20 @@ namespace BookRental.NET
             CreateMap<Book, BookDTOCreate>().ReverseMap();
             CreateMap<BookDTO, BookDTOUpdate>().ReverseMap();
             CreateMap<Book, BookDTOUpdate>().ReverseMap();
+
+            // Reservations
+            CreateMap<Reservation, ReservationDTO>().ReverseMap();
+            CreateMap<ReservationDTO, ReservationDTOCreate>().ReverseMap();
+            CreateMap<Reservation, ReservationDTOCreate>().ReverseMap();
+            CreateMap<ReservationDTO, ReservationDTOUpdate>().ReverseMap();
+            CreateMap<Reservation, ReservationDTOUpdate>().ReverseMap();
+
+            // Loans
+            CreateMap<Loan, LoanDTO>().ReverseMap();
+            CreateMap<LoanDTO, LoanDTOCreate>().ReverseMap();
+            CreateMap<Loan, LoanDTOCreate>().ReverseMap();
+            CreateMap<LoanDTO, LoanDTOUpdate>().ReverseMap();
+            CreateMap<Loan, LoanDTOUpdate>().ReverseMap();
         }
     }
 }

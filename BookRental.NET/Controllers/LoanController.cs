@@ -4,6 +4,8 @@ using BookRental.NET.Models;
 using BookRental.NET.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using BookRental.NET.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookRental.NET.Controllers
 {
@@ -14,11 +16,13 @@ namespace BookRental.NET.Controllers
         protected APIResponse _response;
         private readonly ILoanRepository _dbLoan;
         private readonly IMapper _mapper;
+        private readonly BookRentalDbContext _dbContext;
 
-        public LoanController(ILoanRepository dbLoan, IMapper mapper)
+        public LoanController(ILoanRepository dbLoan, IMapper mapper, BookRentalDbContext dbContext)
         {
             _dbLoan = dbLoan;
             _mapper = mapper;
+            this._dbContext = dbContext;
             this._response = new();
         }
 
@@ -77,11 +81,21 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(LoanDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(LoanDTO), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(LoanDTO), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateLoan([FromBody] LoanDTOCreate createDTO)
+        public async Task<ActionResult<APIResponse>> CreateLoan(int user_id, int book_id)
         {
             try
             {
-                if (createDTO == null) return BadRequest();
+                Book book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == book_id);
+                if (book == null) return NotFound();
+
+                User user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == user_id);
+                if (user == null) return NotFound();
+
+                LoanDTOCreate createDTO = new LoanDTOCreate();
+                createDTO.StartDate = DateTime.Now;
+                createDTO.User = user;
+                createDTO.Book = book;
+                createDTO.EndDate = null;
 
                 Loan Loan = _mapper.Map<Loan>(createDTO);
 

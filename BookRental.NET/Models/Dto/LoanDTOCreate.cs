@@ -6,7 +6,7 @@ namespace BookRental.NET.Models.Dto
     {
         [Required]
         public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         [Required]
         public User User { get; set; }
         [Required]

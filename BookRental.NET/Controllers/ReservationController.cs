@@ -5,6 +5,7 @@ using BookRental.NET.Repository;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using BookRental.NET.Data;
 
 namespace BookRental.NET.Controllers
 {
@@ -15,11 +16,13 @@ namespace BookRental.NET.Controllers
         protected APIResponse _response;
         private readonly IReservationRepository _dbReservation;
         private readonly IMapper _mapper;
+        private readonly BookRentalDbContext _dbContext;
 
-        public ReservationController(IReservationRepository dbReservation, IMapper mapper)
+        public ReservationController(IReservationRepository dbReservation, IMapper mapper, BookRentalDbContext dbContext)
         {
             _dbReservation = dbReservation;
             _mapper = mapper;
+            this._dbContext = dbContext;
             this._response = new();
         }
 
@@ -78,11 +81,20 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(ReservationDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ReservationDTO), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ReservationDTO), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateReservation([FromBody] ReservationDTOCreate createDTO)
+        public async Task<ActionResult<APIResponse>> CreateReservation(int user_id, int book_id)
         {
             try
             {
-                if (createDTO == null) return BadRequest();
+                User user = _dbContext.Users.FirstOrDefault(u => u.Id.Equals(user_id));
+                if (user == null) { return NotFound(); }
+
+                Book book = _dbContext.Books.FirstOrDefault(b => b.Id.Equals(book_id));
+                if (book == null) { return NotFound(); }
+
+                ReservationDTOCreate createDTO = new ReservationDTOCreate();
+                createDTO.Status = "PENDING";
+                createDTO.User = user;
+                createDTO.Book = book;
 
                 Reservation Reservation = _mapper.Map<Reservation>(createDTO);
 
@@ -138,15 +150,16 @@ namespace BookRental.NET.Controllers
         [ProducesResponseType(typeof(ReservationDTO), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ReservationDTO), StatusCodes.Status400BadRequest)]
         [HttpPut("{id:int}", Name = "EditReservation")]
-        public async Task<ActionResult<APIResponse>> UpdateReservation(int id, [FromBody] ReservationDTOUpdate updateDTO, bool toApprove)
+        public async Task<ActionResult<APIResponse>> UpdateReservation(int id, bool toApprove)
         {
             try
             {
-                if (updateDTO == null || id != updateDTO.Id) return BadRequest();
+                Reservation reservation = _dbContext.Reservations.FirstOrDefault(r => r.Id == id);
+                if (reservation == null) return NotFound();
 
-                Reservation Reservation = _mapper.Map<Reservation>(updateDTO);
+                reservation.Status = toApprove == true ? "ACCEPTED" : "DENIED";
 
-                await _dbReservation.UpdateAsync(Reservation, toApprove);
+                await _dbReservation.UpdateAsync(reservation, toApprove);
                 await _dbReservation.SaveAsync();
 
                 _response.StatusCode = HttpStatusCode.NoContent;

@@ -155,7 +155,7 @@ namespace BookRental.NET.Controllers
         {
             try
             {
-                LoanDTOUpdate updateDTO = _mapper.Map<LoanDTOUpdate>(await _dbLoan.GetAsync(Loan => Loan.Id == id));
+                LoanDTOUpdate updateDTO = _mapper.Map<LoanDTOUpdate>(await _dbLoan.GetAsync(Loan => Loan.Id == id, track: false));
 
                 if (updateDTO == null) return BadRequest();
 
